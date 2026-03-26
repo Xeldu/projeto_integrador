@@ -1,0 +1,7 @@
+.env
+__pycache__/
+*.pyc
+exports/*.csv
+postgres_data/
+.venv/
+venv/
