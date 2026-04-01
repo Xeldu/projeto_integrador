@@ -18,6 +18,14 @@ services:
     ports:
       - "5432:5432"
 
+  mosquitto:
+    image: eclipse-mosquitto:2
+    restart: unless-stopped
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    ports:
+      - "1883:1883"
+
   api:
     build:
       context: .
@@ -33,6 +41,18 @@ services:
       - ./exports:/exports
       - ./services/api/app:/app/app
 
+  mqtt_subscriber:
+    build:
+      context: .
+      dockerfile: services/mqtt_subscriber/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      - mosquitto
+      - api
+    volumes:
+      - ./services/mqtt_subscriber/app:/app/app
+
   dashboard:
     build:
       context: .
@@ -45,6 +65,7 @@ services:
       - "8501:8501"
     volumes:
       - ./services/dashboard/app:/app/app
+      - ./services/dashboard/.streamlit:/app/.streamlit
 
 volumes:
   postgres_data:

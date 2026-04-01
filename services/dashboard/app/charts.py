@@ -21,6 +21,8 @@ def realtime_chart(df: pd.DataFrame) -> go.Figure:
         hovermode="x unified",
         plot_bgcolor="white",
         paper_bgcolor="white",
+        uirevision="constant", 
+        
     )
     return fig
 
@@ -47,5 +49,7 @@ def rolling_chart(df: pd.DataFrame) -> go.Figure:
         plot_bgcolor="white",
         paper_bgcolor="white",
         legend=dict(orientation="h", y=1.1),
+        uirevision="constant",
+        
     )
     return fig

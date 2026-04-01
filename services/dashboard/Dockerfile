@@ -6,6 +6,7 @@ COPY services/dashboard/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY services/dashboard/app/ ./app/
+COPY services/dashboard/.streamlit/ ./.streamlit/
 
 EXPOSE 8501
 
