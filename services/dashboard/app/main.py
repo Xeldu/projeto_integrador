@@ -1,9 +1,8 @@
-import time
 from datetime import date
 
 import streamlit as st
 
-from api_client import get_recent, get_stats, get_csv, is_api_alive
+from api_client import get_recent, get_stats, get_csv, is_api_alive, reset_readings
 from charts import realtime_chart, rolling_chart
 
 st.set_page_config(
@@ -38,20 +37,33 @@ with st.sidebar:
             st.warning("No data for this day.")
 
     st.markdown("---")
+    st.markdown("### Sessão")
+    if st.button(
+        "Reiniciar",
+        use_container_width=True,
+        help="Apaga todas as medições\ne inicia uma nova sessão.",
+    ):
+        if reset_readings():
+            st.success("Sessão reiniciada!")
+        else:
+            st.error("Falha ao reiniciar.")
+
+    st.markdown("---")
     if is_api_alive():
         st.success("API online")
     else:
         st.error("API offline")
 
-# ── Live section — only this reruns on the timer ──────────
+# ── Dashboard (atualiza sem recarregar a página inteira) ──
 @st.fragment(run_every=refresh_rate)
-def live_dashboard():
+def dashboard(device_filter, limit):
     device_id = device_filter or None
     df    = get_recent(device_id, limit=limit)
     stats = get_stats(device_id)
 
-    # KPIs
+    # ── KPIs ──────────────────────────────────────────────
     c1, c2, c3, c4 = st.columns(4)
+
     if not df.empty:
         current = float(df["temperature"].iloc[-1])
         prev    = float(df["temperature"].iloc[-2]) if len(df) > 1 else current
@@ -65,7 +77,7 @@ def live_dashboard():
 
     st.markdown("---")
 
-    # Charts
+    # ── Charts ────────────────────────────────────────────
     if df.empty:
         st.info("Waiting for data from the simulator…")
     else:
@@ -81,4 +93,4 @@ def live_dashboard():
             display.columns = ["Timestamp", "Device", "°C"]
             st.dataframe(display, use_container_width=True, hide_index=True)
 
-live_dashboard()
+dashboard(device_filter, limit)

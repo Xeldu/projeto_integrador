@@ -48,6 +48,15 @@ def get_csv(day: str, device_id: str | None = None) -> bytes | None:
     return None
 
 
+def reset_readings() -> bool:
+    api_key = os.getenv("API_KEY", "dev-secret-key")
+    try:
+        r = requests.delete(f"{API_BASE}/readings", headers={"x-api-key": api_key}, timeout=5)
+        return r.status_code == 200
+    except Exception:
+        return False
+
+
 def is_api_alive() -> bool:
     try:
         r = requests.get(f"{API_BASE}/health", timeout=3)
