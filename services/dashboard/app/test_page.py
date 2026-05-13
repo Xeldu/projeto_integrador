@@ -320,6 +320,16 @@ def render_test_page(sensor_type: str, unit: str):
                         st.session_state[key_test] = test
                         st.session_state[key_snap] = time.time()
                         st.session_state[key_prev] = None
+                        
+                        # Add initial reading
+                        live = get_live_channels()
+                        initial_readings = [
+                            {"test_id": test["id"], "channel": int(ch),
+                             "value": val, "unit": unit}
+                            for ch, val in live.items()
+                        ]
+                        add_test_readings(test["id"], initial_readings)
+                        
                         st.success(f"Test #{test['id']} started!")
                         st.rerun()
                     else:
@@ -333,6 +343,15 @@ def render_test_page(sensor_type: str, unit: str):
             tc2.metric("Reference ch.",   f"Ch {ref_ch}")
             tc3.empty()   # countdown fills here via fragment
             if tc4.button("⏹ Stop", type="secondary", use_container_width=True):
+                # Add final reading before finishing
+                live = get_live_channels()
+                final_readings = [
+                    {"test_id": test_id, "channel": int(ch),
+                     "value": val, "unit": unit}
+                    for ch, val in live.items()
+                ]
+                add_test_readings(test_id, final_readings)
+                
                 finished = finish_test(test_id)
                 st.session_state[key_test] = None
                 if finished:
@@ -347,31 +366,36 @@ def render_test_page(sensor_type: str, unit: str):
         live      = get_live_channels()
         hist_df   = get_live_history(n_points=80)
 
+        # Initialize previous values dict if not exists
+        if "channel_prev_values" not in st.session_state:
+            st.session_state.channel_prev_values = {}
+        
         # Channel metrics row
         m_cols = st.columns(N_CHANNELS)
         for i in range(N_CHANNELS):
             ch  = i + 1
             val = live.get(ch)
             
-            # Obter valor anterior do session_state
-            prev_key = f"prev_val_ch_{ch}"
-            prev_val = st.session_state.get(prev_key)
+            # Get previous value
+            prev_val = st.session_state.channel_prev_values.get(ch)
             
-            # Calcular delta
+            # Calculate delta
             delta = None
             if val is not None and prev_val is not None:
                 delta = round(val - prev_val, 2)
             
-            # Mostrar métrica com delta
+            # Show metric with delta
             m_cols[i].metric(
                 f"Ch {ch}", 
                 f"{val} {unit}" if val is not None else "—",
                 delta=delta
             )
-            
-            # Armazenar valor atual para próxima iteração
+        
+        # Update previous values after displaying metrics
+        for ch in range(1, N_CHANNELS + 1):
+            val = live.get(ch)
             if val is not None:
-                st.session_state[prev_key] = val
+                st.session_state.channel_prev_values[ch] = val
 
         # Live time series chart — full width
         active = st.session_state.get(key_test)
@@ -391,7 +415,7 @@ def render_test_page(sensor_type: str, unit: str):
 
             if elapsed >= SNAPSHOT_INTERVAL:
                 readings_payload = [
-                    {"test_id": test_id, "channel": ch,
+                    {"test_id": test_id, "channel": int(ch),
                      "value": val, "unit": unit}
                     for ch, val in live.items()
                 ]
@@ -403,6 +427,14 @@ def render_test_page(sensor_type: str, unit: str):
 
                 if (current_ref is not None and prev_ref is not None
                         and abs(current_ref - prev_ref) < DELTA_STOP):
+                    # Add final reading before finishing
+                    final_readings = [
+                        {"test_id": test_id, "channel": int(ch),
+                         "value": val, "unit": unit}
+                        for ch, val in live.items()
+                    ]
+                    add_test_readings(test_id, final_readings)
+                    
                     finished = finish_test(test_id)
                     st.session_state[key_test] = None
                     st.session_state[key_prev] = None
