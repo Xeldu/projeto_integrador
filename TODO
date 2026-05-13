@@ -1,0 +1,9 @@
+#TODO: fazer catalogo de maquinas -  CHECK
+#TODO: Fazer automatização pra que se entre medições a temperatura estiver menor que 1 grau, 
+#gere um relatorio de temperatura dessa maquina - CHECK
+#TODO: Medições a cada 10 minutos - CHECK
+#TODO: Configuração de outras páginas pra testes dferentes (pressão, etc.) - CHECK
+
+
+#TODO: Ajeitar novo metodo pra salvar na database do SQL
+#TODO: Exportar relatorio inteiro, nao só o grafico - CHECK
