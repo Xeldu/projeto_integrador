@@ -103,6 +103,16 @@ def export_csv(
     )
 
 
+@router.delete("/readings", status_code=200)
+def reset_readings(
+    db: Session = Depends(get_db),
+    _: None = Depends(verify_api_key),
+):
+    db.query(Reading).delete()
+    db.commit()
+    return {"deleted": True}
+
+
 @router.get("/health")
 def health():
     return {"status": "ok"}
